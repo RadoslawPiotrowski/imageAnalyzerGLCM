@@ -17,3 +17,6 @@ Jak nie macie virtualnenv'a to jeszcze to się może przydać
 ```
 pip install virtualenv --user
 ```
+
+usefull stuff
+http://matlab.izmiran.ru/help/toolbox/images/enhanc15.html?fbclid=IwAR2Bjc1Y-WFXh0kc9VxBkYzcb0IsShF0PoctpfDCQuijJ4z0WKY82unPNL0
