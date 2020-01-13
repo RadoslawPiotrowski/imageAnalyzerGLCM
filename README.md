@@ -1,1 +1,2 @@
-# imageAnalyzerGLCM
+# imageAnalyzeGLCM
+
