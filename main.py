@@ -8,13 +8,34 @@ import random
 DIR_NAME = "img"
 # size of square used to GLCM
 PATCH_SIZE = 21
-NUMBER_OF_SAMPLES = 5
-RANDOM = True
+NUMBER_OF_SAMPLES = 8
+RANDOM = False
+OFFSETS = [1, 2, 3, 4]
+ANGLES = [0, np.pi/2]
 
 # Get the list of textures
 img_names = utils.get_images_names_from_dir(DIR_NAME)
 
 image_features = {}
+
+
+def draw_all_data_graph(image_features, img_names):
+    # create the figure
+    fig = plt.figure()
+    # Mapping colors
+    cmap = utils.get_cmap(len(img_names) + 1)
+    # for each patch, plot (dissimilarity, correlation)
+    for img_idx, img_name in enumerate(img_names):
+        color = cmap(img_idx)
+        x_val = image_features[img_name][0]
+        y_val = image_features[img_name][1]
+        # print("X VALUES: ", x_val)
+        # print("Y VALUES: ", y_val)
+        # print("COLOR: ", color)
+        plt.scatter(x_val, y_val, marker='o', color=color, label=img_name)
+        plt.legend()
+    plt.show()
+
 
 for img_idx, img_name in enumerate(img_names):
 
@@ -43,18 +64,18 @@ for img_idx, img_name in enumerate(img_names):
         img_patches.append(image[loc[0]:loc[0] + PATCH_SIZE,
                              loc[1]:loc[1] + PATCH_SIZE])
 
-    print(type(patch_locations))
+    # print(type(patch_locations))
     # compute some GLCM properties each patch
     xs = []
     ys = []
     for patch in img_patches:
-        glcm = greycomatrix(patch, distances=[4], angles=[90], levels=256,
+        glcm = greycomatrix(patch, distances=OFFSETS, angles=ANGLES, levels=256,
                             symmetric=True, normed=True)
         xs.append(greycoprops(glcm, 'dissimilarity')[0, 0])
         ys.append(greycoprops(glcm, 'correlation')[0, 0])
     image_features[img_name] = (xs, ys)
-    print(xs)
-    print(ys)
+    # print(xs)
+    # print(ys)
     # create the figure
     fig = plt.figure(figsize=(8, 8))
 
@@ -87,24 +108,12 @@ for img_idx, img_name in enumerate(img_names):
     # display the patches and plot
     fig.suptitle('Grey level co-occurrence matrix features', fontsize=14, y=1.05)
     plt.tight_layout()
-    if img_idx != len(img_names) -1:
-        plt.show(block=False)
-    else:
-        plt.show()
-print(image_features)
+    # if img_idx != len(img_names) -1:
+    #     plt.show(block=False)
+    # else:
+    #     plt.show()
+    plt.show(block=False)
+# print(image_features)
+draw_all_data_graph(image_features, img_names)
 
 
-def draw_all_data_graph(image_features, img_names):
-    # create the figure
-    fig2 = plt.figure(figsize=(8, 8))
-    ax2 = fig2.add_subplot()
-    # for each patch, plot (dissimilarity, correlation)
-    # for img_idx, img_name in enumerate(img_names):
-
-        # ax2.plot(xs[:len(grass_patches)], ys[:len(grass_patches)], 'go',
-        #         label='Grass')
-        # ax2.plot(xs[len(grass_patches):], ys[len(grass_patches):], 'bo',
-        #         label='Sky')
-        # ax.set_xlabel('GLCM Dissimilarity')
-        # ax.set_ylabel('GLCM Correlation')
-        # ax.legend()
