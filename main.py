@@ -12,9 +12,9 @@ DIR_NAME = "img"
 DIR_TESTING_NAME = "img_testing"
 # size of square used to GLCM
 PATCH_SIZE = 40
-NUMBER_OF_SAMPLES = 10
+NUMBER_OF_SAMPLES = 32
 RANDOM = False
-OFFSETS = [1]
+OFFSETS = [8]
 ANGLES = [0]
 lerned_centroids = []
 concentrations = []
@@ -81,21 +81,36 @@ def draw_image_with_bounding_boxes(image, bounding_boxes, resuts):
     plt.show()
 
 
-def calculate_accuracy(image, bounding_boxes, categories):
+def calculate_accuracy(bounding_boxes, categories):
     samples = len(bounding_boxes)
     correct_samples = 0
+    index_samples = [0, 0, 0, 0]
+    correct_texture_samples = [0, 0, 0, 0]
     for idx, bound_box in enumerate(bounding_boxes):
-        if bound_box[0] < 400 and bound_box[1] < 400 and categories[idx] == 3:
-            correct_samples += 1
-        elif bound_box[1] < 400 <= bound_box[0] and categories[idx] == 2:
-            correct_samples += 1
-        elif bound_box[0] < 400 <= bound_box[1] and categories[idx] == 1:
-            correct_samples += 1
-        elif bound_box[0] >= 400 and bound_box[1] >= 400 and categories[idx] == 0:
-            correct_samples += 1
-        print(bound_box, categories[idx], correct_samples)
+        if bound_box[0] < 400 and bound_box[1] < 400:
+            index_samples[3] += 1
+            if categories[idx] == 3:
+                correct_samples += 1
+                correct_texture_samples[3] += 1
+        elif bound_box[0] < 400 <= bound_box[1]:
+            index_samples[2] += 1
+            if categories[idx] == 2:
+                correct_samples += 1
+                correct_texture_samples[2] += 1
+        elif bound_box[1] < 400 <= bound_box[0]:
+            index_samples[1] += 1
+            if categories[idx] == 1:
+                correct_samples += 1
+                correct_texture_samples[1] += 1
+        elif bound_box[1] >= 400 and bound_box[0]:
+            index_samples[0] += 1
+            if categories[idx] == 0:
+                correct_samples += 1
+                correct_texture_samples[0] += 1
     result = correct_samples / samples
-    return result
+    all_texture_results = [x / y for x, y in zip(correct_texture_samples, index_samples)]
+    all_texture_results.append(result)
+    return all_texture_results
 
 
 def get_sum_of_distances_to_centroid(centroid_point, points):
@@ -167,45 +182,45 @@ for img_idx, img_name in enumerate(img_names):
     concentrations.append(concentration)
     # print("distances is equal: ", concentration)
 
-    # create the figure
-    fig = plt.figure(figsize=(8, 8))
-
-    # display original image with locations of patches
-    ax = fig.add_subplot(3, 2, 1)
-    ax.imshow(image, cmap=plt.cm.gray,
-              vmin=0, vmax=255)
-    for (y, x) in patch_locations:
-        ax.plot(x + PATCH_SIZE / 2, y + PATCH_SIZE / 2, 'gs')
-    ax.set_xlabel('Original Image')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.axis('image')
-
-    # for each patch, plot (dissimilarity, correlation)
-    ax = fig.add_subplot(3, 2, 2)
-    ax.plot(xs, ys, 'go',
-            label='Patches')
-    ax.set_xlabel('GLCM Dissimilarity')
-    ax.set_ylabel('GLCM Correlation')
-    ax.legend()
-
-    # display the image patches
-    for i, patch in enumerate(img_patches):
-        ax = fig.add_subplot(3, len(img_patches), len(img_patches)*1 + i + 1)
-        ax.imshow(patch, cmap=plt.cm.gray,
-                  vmin=0, vmax=255)
-        ax.set_xlabel('Patch %d' % (i + 1))
-
-    # display the patches and plot
-    fig.suptitle('Grey level co-occurrence matrix features', fontsize=14, y=1.05)
-    plt.tight_layout()
+    # # create the figure
+    # fig = plt.figure(figsize=(8, 8))
+    #
+    # # display original image with locations of patches
+    # ax = fig.add_subplot(3, 2, 1)
+    # ax.imshow(image, cmap=plt.cm.gray,
+    #           vmin=0, vmax=255)
+    # for (y, x) in patch_locations:
+    #     ax.plot(x + PATCH_SIZE / 2, y + PATCH_SIZE / 2, 'gs')
+    # ax.set_xlabel('Original Image')
+    # ax.set_xticks([])
+    # ax.set_yticks([])
+    # ax.axis('image')
+    #
+    # # for each patch, plot (dissimilarity, correlation)
+    # ax = fig.add_subplot(3, 2, 2)
+    # ax.plot(xs, ys, 'go',
+    #         label='Patches')
+    # ax.set_xlabel('GLCM Dissimilarity')
+    # ax.set_ylabel('GLCM Correlation')
+    # ax.legend()
+    #
+    # # display the image patches
+    # for i, patch in enumerate(img_patches):
+    #     ax = fig.add_subplot(3, len(img_patches), len(img_patches)*1 + i + 1)
+    #     ax.imshow(patch, cmap=plt.cm.gray,
+    #               vmin=0, vmax=255)
+    #     ax.set_xlabel('Patch %d' % (i + 1))
+    #
+    # # display the patches and plot
+    # fig.suptitle('Grey level co-occurrence matrix features', fontsize=14, y=1.05)
+    # plt.tight_layout()
     # if img_idx != len(img_names) -1:
     #     plt.show(block=False)
     # else:
     #     plt.show()
     # plt.show(block=False)
 # print(image_features)
-draw_all_data_graph(image_features, img_names)
+# draw_all_data_graph(image_features, img_names)
 
 # ------------------ TESTING THE CLASSIFICATOR -------------------
 
@@ -266,11 +281,12 @@ for img_idx, img_name in enumerate(img_testing_names):
         center = [greycoprops(glcm, 'dissimilarity')[0, 0], greycoprops(glcm, 'correlation')[0, 0]]
         closest_center = get_idx_of_closest_center(center, testing_patch_locations[idx])
         results.append(closest_center)
+    accuracies = (calculate_accuracy(testing_patch_locations, results))
     draw_image_with_bounding_boxes(image, testing_patch_locations, results)
-    accuracies = calculate_accuracy(image, testing_patch_locations, results)
-    print(accuracies)
+
 
 for img_idx, img_name in enumerate(img_names):
     with open('experience.csv', 'a', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([img_name, NUMBER_OF_SAMPLES, PATCH_SIZE, OFFSET_STRING, ANGLES_STRING, concentrations[img_idx]])
+        writer.writerow([img_name, NUMBER_OF_SAMPLES, PATCH_SIZE, OFFSET_STRING, ANGLES_STRING, concentrations[img_idx],
+                         accuracies[0], accuracies[1], accuracies[2], accuracies[3], accuracies[4]])
